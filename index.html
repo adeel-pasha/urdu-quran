@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran Audio Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .audio-list {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .playlist {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .audio-item {
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .audio-item:hover {
+            background: #e9ecef;
+        }
+
+        .player-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 4px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="audio-list">
+            <h2>Available Surahs</h2>
+            <div id="audioItems">
+                <!-- Audio items will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="playlist">
+            <h2>Playlist</h2>
+            <div id="playlistItems"></div>
+        </div>
+    </div>
+
+    <div class="player-controls">
+        <audio id="audioPlayer" controls></audio>
+        <button onclick="playPrevious()">Previous</button>
+        <button onclick="playNext()">Next</button>
+    </div>
+
+    <script>
+        // Replace these with actual audio URLs from the website
+        const audioFiles = [
+{ title: "1- Al-Fatihah (The Opening)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/001-Al-Fatihah-The-Opening-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%81%D8%A7%D8%AA%D8%AD%D8%A9.mp3" },
+{ title: "2- Al-Baqarah (The Cow)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/002-Al-Baqarah-The-Cow-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A8%D9%82%D8%B1%D8%A9.mp3" },
+{ title: "3- Al-Imran (The Family of Imran)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/003-Al-Imran-The-Family-of-Imran-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A2%D9%84-%D8%B9%D9%85%D8%B1%D8%A7%D9%86.mp3" },
+{ title: "4- An-Nisa (The Women)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/004-An-Nisa-The-Women-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D8%B3%D8%A7%D8%A1.mp3" },
+{ title: "5- Al-Maidah (The Table Spread with Food)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/005-Al-Maidah-The-Table-spread-with-Food-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%A7%D8%A6%D8%AF%D8%A9.mp3" },
+{ title: "6- Al-Anam (The Cattle)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/006-Al-Anam-The-Cattle-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A3%D9%86%D8%B9%D8%A7%D9%85.mp3" },
+{ title: "7- Al-Araf (The Heights)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/007-Al-Araf-The-Heights-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A3%D8%B9%D8%B1%D8%A7%D9%81.mp3" },
+{ title: "8- Al-Anfal (The Spoils of War)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/008-Al-Anfal-The-Spoils-of-War-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A3%D9%86%D9%81%D8%A7%D9%84.mp3" },
+{ title: "9- At-Taubah (The Repentance)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/009-At-Taubah-The-Repentance-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AA%D9%88%D8%A8%D8%A9.mp3" },
+{ title: "10- Yunus (Jonah)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/010-Yunus-Jonah-%D8%B3%D9%88%D8%B1%D8%A9-%D9%8A%D9%88%D9%86%D8%B3.mp3" },
+{ title: "11- Hud", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/011-Hud-%D8%B3%D9%88%D8%B1%D8%A9-%D9%87%D9%88%D8%AF.mp3" },
+{ title: "12- Yusuf (Joseph)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/012-Yusuf-Joseph-%D8%B3%D9%88%D8%B1%D8%A9-%D9%8A%D9%88%D8%B3%D9%81.mp3" },
+{ title: "13- Ar-Rad (The Thunder)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/013-Ar-Rad-The-Thunder-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B1%D8%B9%D8%AF.mp3" },
+{ title: "14- Ibrahim (Abraham)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/014-Ibrahim-Abraham-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A5%D8%A8%D8%B1%D8%A7%D9%87%D9%8A%D9%85.mp3" },
+{ title: "15- Al-Hijr (The Rocky Tract)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/015-Al-Hijr-The-Rocky-Tract-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AD%D8%AC%D8%B1.mp3" },
+{ title: "16- An-Nahl (The Bees)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/016-An-Nahl-The-Bees-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D8%AD%D9%84.mp3" },
+{ title: "17- Al-Isra (The Night Journey)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/017-Al-Isra-The-Night-Journey-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A5%D8%B3%D8%B1%D8%A7%D8%A1.mp3" },
+{ title: "18- Al-Kahf (The Cave)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/018-Al-Kahf-The-Cave-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%83%D9%87%D9%81.mp3" },
+{ title: "19- Maryam (Mary)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/019-Maryam-Mary-%D8%B3%D9%88%D8%B1%D8%A9-%D9%85%D8%B1%D9%8A%D9%85.mp3" },
+{ title: "20- Taha", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/020-Taha-%D8%B3%D9%88%D8%B1%D8%A9-%D8%B7%D9%87.mp3" },
+{ title: "21- Al-Anbiya (The Prophets)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/021-Al-Anbiya-The-Prophets-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A3%D9%86%D8%A8%D9%8A%D8%A7%D8%A1.mp3" },
+{ title: "22- Al-Hajj (The Pilgrimage)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/022-Al-Hajj-The-Pilgrimage-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AD%D8%AC.mp3" },
+{ title: "23- Al-Muminun (The Believers)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/023-Al-Muminoon-The-Believers-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%A4%D9%85%D9%86%D9%88%D9%86.mp3" },
+{ title: "24- An-Nur (The Light)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/024-An-Noor-The-Light-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D9%88%D8%B1.mp3" },
+{ title: "25- Al-Furqan (The Criterion)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/025-Al-furqantheCriterion-.mp3" },
+{ title: "26- Ash-Shuara (The Poets)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/026-Ash-Shuara-The-Poets-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B4%D8%B9%D8%B1%D8%A7%D8%A1.mp3" },
+{ title: "27- An-Naml (The Ants)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/027-An-Naml-The-Ants-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D9%85%D9%84.mp3" },
+{ title: "28- Al-Qasas (The Stories)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/028-Al-Qasas-The-Stories-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%B5%D8%B5.mp3" },
+{ title: "29- Al-Ankabut (The Spider)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/029-Al-Ankaboot-The-Spider-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B9%D9%86%D9%83%D8%A8%D9%88%D8%AA.mp3" },
+{ title: "30- Ar-Rum (The Romans)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/030-Ar-Room-The-Romans-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B1%D9%88%D9%85.mp3" },
+{ title: "31- Luqman", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/031-Luqman-%D8%B3%D9%88%D8%B1%D8%A9-%D9%84%D9%82%D9%85%D8%A7%D9%86.mp3" },
+{ title: "32- As-Sajdah (The Prostration)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/032-As-Sajdah-The-Prostration-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B3%D8%AC%D8%AF%D8%A9.mp3" },
+{ title: "33- Al-Ahzab (The Combined Forces)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/033-Al-Ahzab-The-Combined-Forces-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A3%D8%AD%D8%B2%D8%A7%D8%A8.mp3" },
+{ title: "34- Saba (Sheba)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/034-Saba-Sheba-%D8%B3%D9%88%D8%B1%D8%A9-%D8%B3%D8%A8%D8%A3.mp3" },
+{ title: "35- Fatir (The Originator)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/035-Fatir-The-Orignator-%D8%B3%D9%88%D8%B1%D8%A9-%D9%81%D8%A7%D8%B7%D8%B1.mp3" },
+{ title: "36- Ya-Sin", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/036-Ya-seen-%D8%B3%D9%88%D8%B1%D8%A9-%D9%8A%D8%B3.mp3" },
+{ title: "37- As-Saffat (Those who set the Ranks)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/037-As-Saaffat-Those-Ranges-in-Ranks-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B5%D8%A7%D9%81%D8%A7%D8%AA.mp3" },
+{ title: "38- Sad", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/038-Sad-The-Letter-Sad-%D8%B3%D9%88%D8%B1%D8%A9-%D8%B5.mp3" },
+{ title: "39- Az-Zumar (The Troops)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/039-Az-Zumar-The-Groups-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B2%D9%85%D8%B1.mp3" },
+{ title: "40- Ghafir (The Forgiver)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/040-Ghafir-The-Forgiver-God-%D8%B3%D9%88%D8%B1%D8%A9-%D8%BA%D8%A7%D9%81%D8%B1.mp3" },
+{ title: "41- Fussilat (Explained in Detail)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/041-Fussilat-Explained-in-Detail-%D8%B3%D9%88%D8%B1%D8%A9-%D9%81%D8%B5%D9%84%D8%AA.mp3" },
+{ title: "42- Ash-Shura (The Consultation)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/042-Ash-Shura-Consultation-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B4%D9%88%D8%B1%D9%89.mp3" },
+{ title: "43- Az-Zukhruf (The Gold Adornment)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/043-Az-Zukhruf-The-Gold-Adornment-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B2%D8%AE%D8%B1%D9%81.mp3" },
+{ title: "44- Ad-Dukhan (The Smoke)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/044-Ad-Dukhan-The-Smoke-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AF%D8%AE%D8%A7%D9%86.mp3" },
+{ title: "45- Al-Jathiyah (Crouching)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/045-Al-Jathiya-Crouching-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AC%D8%A7%D8%AB%D9%8A%D8%A9.mp3" },
+{ title: "46- Al-Ahqaf (The Wind-Curved Sandhills)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/046-Al-Ahqaf-The-Curved-Sand-hills-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A3%D8%AD%D9%82%D8%A7%D9%81.mp3" },
+{ title: "47- Muhammad", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/047-Muhammad-%D8%B3%D9%88%D8%B1%D8%A9-%D9%85%D8%AD%D9%85%D8%AF.mp3" },
+{ title: "48- Al-Fath (The Victory)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/048-Al-Fath-The-Victory-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%81%D8%AA%D8%AD.mp3" },
+{ title: "49- Al-Hujurat (The Private Apartments)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/049-Al-Hujurat-The-Dwellings-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AD%D8%AC%D8%B1%D8%A7%D8%AA.mp3" },
+{ title: "50- Qaf", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/050-Qaf-The-Letter-Qaf-%D8%B3%D9%88%D8%B1%D8%A9-%D9%82.mp3" },
+{ title: "51- Adh-Dhariyat (The Winnowing Winds)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/051-Adh-Dhariyat-The-Wind-that-Scatter-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B0%D8%A7%D8%B1%D9%8A%D8%A7%D8%AA.mp3" },
+{ title: "52- At-Tur (The Mount)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/052-At-Tur-The-Mount-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B7%D9%88%D8%B1.mp3" },
+{ title: "53- An-Najm (The Star)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/053-An-Najm-The-Star-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D8%AC%D9%85.mp3" },
+{ title: "54- Al-Qamar (The Moon)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/054-Al-Qamar-The-Moon-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D9%85%D8%B1.mp3" },
+{ title: "55- Ar-Rahman (The Beneficent)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/055-Ar-Rahman-The-Most-Graciouse-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B1%D8%AD%D9%85%D9%86.mp3" },
+{ title: "56- Al-Waqiah (The Inevitable)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/056-Al-Waqiah-The-Event-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%88%D8%A7%D9%82%D8%B9%D8%A9.mp3" },
+{ title: "57- Al-Hadid (The Iron)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/057-Al-Hadid-The-Iron-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AD%D8%AF%D9%8A%D8%AF.mp3" },
+{ title: "58- Al-Mujadila (The Pleading Woman)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/058-Al-Mujadilah-She-That-Disputeth-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%AC%D8%A7%D8%AF%D9%84%D8%A9.mp3" },
+{ title: "59- Al-Hashr (The Exile)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/059-Al-Hashr-The-Gathering-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AD%D8%B4%D8%B1.mp3" },
+{ title: "60- Al-Mumtahana (The Woman to be Examined)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/060-Al-Mumtahanah-The-Woman-to-be-examined-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D9%85%D8%AA%D8%AD%D9%86%D8%A9.mp3" },
+{ title: "61- As-Saff (The Ranks)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/061-As-Saff-The-Row-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B5%D9%81.mp3" },
+{ title: "62- Al-Jumuah (Friday)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/062-Al-Jumuah-Friday-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AC%D9%85%D8%B9%D8%A9.mp3" },
+{ title: "63- Al-Munafiqun (The Hypocrites)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/063-Al-Munafiqoon-The-Hypocrites-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D9%86%D8%A7%D9%81%D9%82%D9%88%D9%86.mp3" },
+{ title: "64- At-Taghabun (Mutual Disillusion)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/064-At-Taghabun-Mutual-Loss-Gain-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AA%D8%BA%D8%A7%D8%A8%D9%86.mp3" },
+{ title: "65- At-Talaq (The Divorce)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/065-At-Talaq-The-Divorce-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B7%D9%84%D8%A7%D9%82.mp3" },
+{ title: "66- At-Tahrim (The Prohibition)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/066-At-Tahrim-The-Prohibition-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AA%D8%AD%D8%B1%D9%8A%D9%85.mp3" },
+{ title: "67- Al-Mulk (The Sovereignty)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/067-Al-Mulk-Dominion-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D9%84%D9%83.mp3" },
+{ title: "68- Al-Qalam (The Pen)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/068-Al-Qalam-The-Pen-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D9%84%D9%85.mp3" },
+{ title: "69- Al-Haqqah (The Reality)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/069-Al-Haaqqah-The-Inevitable-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AD%D8%A7%D9%82%D8%A9.mp3" },
+{ title: "70- Al-Maarij (The Ascending Stairways)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/070-Al-Maarij-The-Ways-of-Ascent-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%B1%D8%AC.mp3" },
+{ title: "71- Nuh (Noah)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/071-Nooh-%D8%B3%D9%88%D8%B1%D8%A9-%D9%86%D9%88%D8%AD.mp3" },
+{ title: "72- Al-Jinn (The Jinn)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/072-Al-Jinn-The-Jinn-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AC%D9%86.mp3" },
+{ title: "73- Al-Muzzammil (The Enshrouded One)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/073-Al-Muzzammil-The-One-wrapped-in-Garments-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%B2%D9%85%D9%84.mp3" },
+{ title: "74- Al-Muddaththir (The Cloaked One)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/074-Al-Muddaththir-The-One-Enveloped-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%AF%D8%AB%D8%B1.mp3" },
+{ title: "75- Al-Qiyamah (The Resurrection)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/075-Al-Qiyamah-The-Resurrection-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D9%8A%D8%A7%D9%85%D8%A9.mp3" },
+{ title: "76- Al-Insan (The Man)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/076-Al-Insan-Man-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A5%D9%86%D8%B3%D8%A7%D9%86.mp3" },
+{ title: "77- Al-Mursalat (The Emissaries)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/077-Al-Mursalat-Those-sent-forth-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%B1%D8%B3%D9%84%D8%A7%D8%AA.mp3" },
+{ title: "78- An-Naba (The Tidings)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/078-An-Naba-The-Great-News-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D8%A8%D8%A3.mp3" },
+{ title: "79- An-Naziat (Those who drag forth)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/079-An-Naziat-Those-who-Pull-Out-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D8%A7%D8%B2%D8%B9%D8%A7%D8%AA.mp3" },
+{ title: "80- Abasa (He frowned)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/080-Abasa-He-frowned-%D8%B3%D9%88%D8%B1%D8%A9-%D8%B9%D8%A8%D8%B3.mp3" },
+{ title: "81- At-Takwir (The Overthrowing)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/081-At-Takwir-The-Overthrowing-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AA%D9%83%D9%88%D9%8A%D8%B1.mp3" },
+{ title: "82- Al-Infitar (The Cleaving)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/082-Al-Infitar-The-Cleaving-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A7%D9%86%D9%81%D8%B7%D8%A7%D8%B1.mp3" },
+{ title: "83- Al-Mutaffifin (The Defrauding)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/083-Al-Mutaffifin-Those-Who-Deal-in-Fraud-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%B7%D9%81%D9%81%D9%8A%D9%86.mp3" },
+{ title: "84- Al-Inshiqaq (The Sundering)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/084-Al-Inshiqaq-The-Splitting-Asunder-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A7%D9%86%D8%B4%D9%82%D8%A7%D9%82.mp3" },
+{ title: "85- Al-Buruj (The Mansions of the Stars)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/085-Al-buroojTheBigStars-.mp3" },
+{ title: "86- At-Tariq (The Nightcomer)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/086-At-Tariq-The-Night-Comer-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B7%D8%A7%D8%B1%D9%82.mp3" },
+{ title: "87- Al-Ala (The Most High)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/087-Al-Ala-The-Most-High-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A3%D8%B9%D9%84%D9%89.mp3" },
+{ title: "88- Al-Ghashiyah (The Overwhelming)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/088-Al-Ghashiya-The-Overwhelming-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%BA%D8%A7%D8%B4%D9%8A%D8%A9.mp3" },
+{ title: "89- Al-Fajr (The Dawn)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/089-Al-Fajr-The-Dawn-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%81%D8%AC%D8%B1.mp3" },
+{ title: "90- Al-Balad (The City)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/090-Al-Balad-The-City-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A8%D9%84%D8%AF.mp3" },
+{ title: "91- Ash-Shams (The Sun)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/091-Ash-Shams-The-Sun-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B4%D9%85%D8%B3.mp3" },
+{ title: "92- Al-Layl (The Night)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/092-Al-Layl-The-Night-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%84%D9%8A%D9%84.mp3" },
+{ title: "93- Ad-Duha (The Morning Hours)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/093-Ad-Dhuha-The-Forenoon-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B6%D8%AD%D9%89.mp3" },
+{ title: "94- Ash-Sharh (The Relief)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/094-As-Sharh-The-Opening-Forth-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B4%D8%B1%D8%AD.mp3" },
+{ title: "95- At-Tin (The Fig)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/095-At-Tin-The-Fig-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AA%D9%8A%D9%86.mp3" },
+{ title: "96- Al-Alaq (The Clot)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/096-Al-alaq-The-Clot-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B9%D9%84%D9%82.mp3" },
+{ title: "97- Al-Qadr (The Power, Fate)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/097-Al-Qadr-The-Night-of-Decree-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%AF%D8%B1.mp3" },
+{ title: "98- Al-Bayyinah (The Clear Proof)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/098-Al-Bayyinah-The-Clear-Evidence-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A8%D9%8A%D9%86%D8%A9.mp3" },
+{ title: "99- Az-Zalzalah (The Earthquake)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/099-Az-Zalzalah-The-Earthquake-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B2%D9%84%D8%B2%D9%84%D8%A9.mp3" },
+{ title: "100- Al-Adiyat (The Courser)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/100-Al-adiyat-Those-That-Run-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B9%D8%A7%D8%AF%D9%8A%D8%A7%D8%AA.mp3" },
+{ title: "101- Al-Qariah (The Calamity)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/101-Al-Qariah-The-Striking-Hour-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%A7%D8%B1%D8%B9%D8%A9.mp3" },
+{ title: "102- At-Takathur (The Rivalry in world increase)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/102-At-Takathur-The-piling-Up-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%AA%D9%83%D8%A7%D8%AB%D8%B1.mp3" },
+{ title: "103- Al-Asr (The Declining Day, Epoch)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/103-Al-Asr-The-Time-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%B9%D8%B5%D8%B1.mp3" },
+{ title: "104- Al-Humazah (The Traducer)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/104-Al-Humazah-The-Slanderer-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%87%D9%85%D8%B2%D8%A9.mp3" },
+{ title: "105- Al-Fil (The Elephant)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/105-Al-Fil-The-Elephant-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%81%D9%8A%D9%84.mp3" },
+{ title: "106- Quraysh", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/106-Quraish-%D8%B3%D9%88%D8%B1%D8%A9-%D9%82%D8%B1%D9%8A%D8%B4.mp3" },
+{ title: "107- Al-Maun (Small Kindnesses)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/107-Al-Maun-Small-Kindnesses-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%A7%D8%B9%D9%88%D9%86.mp3" },
+{ title: "108- Al-Kawthar (Abundance)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/108-Al-Kauthor-A-River-in-Paradise-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%83%D9%88%D8%AB%D8%B1.mp3" },
+{ title: "109- Al-Kafirun (The Disbelievers)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/109-Al-Kafiroon-The-Disbelievers-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%83%D8%A7%D9%81%D8%B1%D9%88%D9%86.mp3" },
+{ title: "110- An-Nasr (Divine Support)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/110-An-Nasr-The-Help-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D8%B5%D8%B1.mp3" },
+{ title: "111- Al-Masad (The Palm Fibre)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/111-Al-Masad-The-Palm-Fibre-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%B3%D8%AF.mp3" },
+{ title: "112- Al-Ikhlas (The Sincerity)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/112-Al-Ikhlas-Sincerity-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D8%A5%D8%AE%D9%84%D8%A7%D8%B5.mp3" },
+{ title: "113- Al-Falaq (The Dawn)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/113-Al-Falaq-The-Daybreak-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%81%D9%84%D9%82.mp3" },
+{ title: "114- An-Nas (Mankind)", url: "https://www.emaanlibrary.com/wp-content/uploads/2018/04/114-An-Nas-Mankind-%D8%B3%D9%88%D8%B1%D8%A9-%D8%A7%D9%84%D9%86%D8%A7%D8%B3.mp3" },
+
+
+
+        ];
+
+        let currentPlaylist = [];
+        let currentTrackIndex = -1;
+
+        // Populate audio list
+        const audioItemsDiv = document.getElementById('audioItems');
+        audioFiles.forEach((file, index) => {
+            const div = document.createElement('div');
+            div.className = 'audio-item';
+            div.innerHTML = `
+                ${file.title}
+                <button onclick="addToPlaylist(${index})">Add to Playlist</button>
+            `;
+            audioItemsDiv.appendChild(div);
+        });
+
+        function addToPlaylist(index) {
+            currentPlaylist.push(audioFiles[index]);
+            updatePlaylistDisplay();
+        }
+
+        function updatePlaylistDisplay() {
+            const playlistDiv = document.getElementById('playlistItems');
+            playlistDiv.innerHTML = '';
+            currentPlaylist.forEach((track, index) => {
+                const div = document.createElement('div');
+                div.className = 'audio-item';
+                div.innerHTML = `
+                    ${track.title}
+                    <button onclick="removeFromPlaylist(${index})">Remove</button>
+                `;
+                div.onclick = () => playTrack(index);
+                playlistDiv.appendChild(div);
+            });
+        }
+
+        function removeFromPlaylist(index) {
+            currentPlaylist.splice(index, 1);
+            updatePlaylistDisplay();
+        }
+
+        function playTrack(index) {
+            currentTrackIndex = index;
+            const audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = currentPlaylist[index].url;
+            audioPlayer.play();
+        }
+
+        function playNext() {
+            if (currentTrackIndex < currentPlaylist.length - 1) {
+                playTrack(currentTrackIndex + 1);
+            }
+        }
+
+        function playPrevious() {
+            if (currentTrackIndex > 0) {
+                playTrack(currentTrackIndex - 1);
+            }
+        }
+
+        // Auto-play next track when current finishes
+        document.getElementById('audioPlayer').addEventListener('ended', playNext);
+    </script>
+</body>
+</html>
